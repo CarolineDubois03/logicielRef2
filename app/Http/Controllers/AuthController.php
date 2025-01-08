@@ -27,6 +27,7 @@ class AuthController extends Controller
         
         if (!$user) {
             return back()->withErrors([
+                
                 'email' => 'Utilisateur non trouvé',
                 ])->onlyInput('email');
             }

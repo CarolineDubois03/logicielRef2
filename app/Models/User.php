@@ -22,6 +22,7 @@ class User extends Authenticatable
         'email',
         'password',
         'id_service',
+        'role',
     ];
 
     protected $hidden = [
@@ -75,5 +76,10 @@ class User extends Authenticatable
 {
     return $this->belongsToMany(Courier::class, 'courier_user');
 }
+
+public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
 
 }

@@ -46,10 +46,6 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::get('profile/change-password', [\App\Http\Controllers\Admin\UsersController::class, 'showChangePasswordForm'])->name('profile.showChangePasswordForm');
     Route::post('profile/change-password', [\App\Http\Controllers\Admin\UsersController::class, 'changePassword'])->name('profile.change-password');
     
-    Route::get('courier/additionalColumns', [\App\Http\Controllers\Admin\CourierController::class, 'showColumns'])->name('courier.showColumns');
-    Route::post('courier/additionalColumns', [\App\Http\Controllers\Admin\CourierController::class, 'storeColumns'])->name('courier.storeColumns');
-    Route::post('courier/additionalColumns/{id}', [\App\Http\Controllers\Admin\CourierController::class, 'editColumn'])->name('courier.editColumn');
-    Route::delete('courier/additionalColumns/{id}', [\App\Http\Controllers\Admin\CourierController::class, 'destroyColumn'])->name('courier.destroyColumn');
     Route::post('courier/categories', [\App\Http\Controllers\Admin\CourierController::class, 'storeNature'])->name('courier.storeNature');
     Route::post('courier/categories/{id}', [\App\Http\Controllers\Admin\CourierController::class, 'editNature'])->name('courier.editNature');
     Route::delete('courier/categories/{id}', [\App\Http\Controllers\Admin\CourierController::class, 'destroyNature'])->name('courier.destroyNature');
@@ -58,6 +54,8 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::post('courier/update-selected-services', [\App\Http\Controllers\Admin\CourierController::class, 'updateSelectedServices'])->name('courier.updateSelectedServices');
     Route::resource('courier', \App\Http\Controllers\Admin\CourierController::class);
     Route::delete('courier', [\App\Http\Controllers\Admin\CourierController::class, 'destroy'])->name('courier.destroy');
+
+    Route::get('couriers/settings', [\App\Http\Controllers\Admin\CourierController::class, 'settings'])->name('courier.settings');
 
     
 });

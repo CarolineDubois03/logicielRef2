@@ -53,6 +53,12 @@ class Courier extends Model
     {
         return $this->belongsToMany(Recipient::class, 'courier_recipient');
     }
+    
+
+    protected $casts = [
+        'copy_to' => 'array', // Cast automatique en tableau
+    ];
+    
 
 
 }

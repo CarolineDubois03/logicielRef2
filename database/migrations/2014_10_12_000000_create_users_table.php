@@ -18,9 +18,11 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('login');
             $table->string('password');
-            $table->string('id_service');
+            $table->unsignedBigInteger('id_service')->nullable(); // Relation avec la table service
+            $table->string('role')->default('user'); // Ajout de la colonne rôle (admin, user, etc.)
             $table->timestamps();
         });
+        
     }
 
     /**

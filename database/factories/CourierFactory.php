@@ -2,26 +2,30 @@
 
 namespace Database\Factories;
 
-use App\Models\Category;
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Category;
+use App\Models\User;
+use App\Models\Recipient;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Courier>
  */
 class CourierFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition(): array
+    protected $model = \App\Models\Courier::class;
+
+    public function definition()
     {
         return [
-            'object' => $this->faker->text(25),
-            'annual_id' => $this->faker->unique()->randomNumber(8),
-            'nature'  => Category::all()->random()->name,
-            'id_handling_user' => 1,
+            'object' => $this->faker->sentence, // Objet du courrier
+            'annual_id' => $this->faker->unique()->numberBetween(1, 1000), // Numéro annuel
+            'id_handling_user' => User::inRandomOrder()->first()?->id ?? User::factory(), // Utilisateur existant ou factory
+            'category' => Category::inRandomOrder()->first()?->id ?? Category::factory(), // Catégorie existante ou factory
+            'date' => $this->faker->date, // Date aléatoire
+            'document_path' => $this->faker->url, // URL fictive
+            'recipient' => Recipient::inRandomOrder()->first()?->id ?? Recipient::factory(), // Destinataire existant ou factory
+            'copy_to' => json_encode(User::inRandomOrder()->take(rand(1, 3))->pluck('id')->toArray()), // Liste JSON d'utilisateurs
+            'year' => $this->faker->numberBetween(2020, 2024), // Année aléatoire
         ];
     }
 }

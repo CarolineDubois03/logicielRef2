@@ -29,7 +29,7 @@
 </style>
 
 <div class="container mx-auto p-4">
-    <h1 class="text-2xl font-bold mt-4 mb-8">Liste de courriers de {{$nameUser}}</h1>
+    <h1 class="text-2xl font-bold mt-4 mb-8">Liste de courriers</h1>
 
     <div class="flex items-center mb-4">
         <form action="{{ route('admin.courier.index') }}" method="GET" class="flex items-center">
@@ -69,7 +69,7 @@
         <a href="{{ route('admin.courier.create')}}" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
             + Ajouter
         </a>
-        <a href="{{ route('admin.courier.showColumns') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        <a href="{{ route('admin.courier.settings') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             Configurer
         </a>
     </div>
@@ -93,10 +93,13 @@
                                             <input type="checkbox" id="selectAll" class="appearance-none rounded border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                                         </th>
                                         <th scope="col" class="min-w-[12rem] py-3.5 pr-3 text-left text-sm font-semibold text-gray-900">N° de dossier</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Objet</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Nature</th>
-                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Agent</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Destinataire</th>
                                         <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Date</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Objet</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Agent traitant</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Copie à</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Nature</th>
+                                        <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Classement</th>
                                         <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-3">
                                             <span class="sr-only">Actions</span>
                                         </th>
@@ -109,10 +112,27 @@
                                             <input type="checkbox" class="courierCheckbox appearance-none rounded border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600" value="{{ $courier->id }}">
                                         </td>
                                         <td class="whitespace-nowrap py-4 pr-3 text-sm font-medium text-gray-900">{{ $courier->annual_id }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $courier->recipient }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $courier->created_at->format('d/m/Y') }}</td>                                        
                                         <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $courier->object }}</td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $courier->nature }}</td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $courier->handlingUser->name }}</td>
-                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $courier->created_at->format('d/m/Y') }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $courier->handlingUser->last_name }} {{ $courier->handlingUser->first_name }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                                            @if($courier->copiedUsers->isNotEmpty())
+                                                @foreach($courier->copiedUsers as $user)
+                                                    <span class="inline-block bg-gray-200 rounded px-2 py-1 text-xs text-gray-700">
+                                                        {{ $user->last_name }} {{ $user->first_name }}
+                                                    </span>
+                                                @endforeach
+                                            @else
+                                                Aucun
+                                            @endif
+                                        </td>
+
+
+
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $courier->couriersType->name ?? 'Non défini' }}</td>
+                                        <td class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">{{ $courier->document_path }}</td>
+
                                         <td class="whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-3">
                                             <a href="{{ route('admin.courier.edit', $courier->id) }}" class="text-indigo-600 hover:text-indigo-900">Éditer</a>
                                             <form action="{{ route('admin.courier.destroy', $courier->id) }}" method="POST" class="inline">
@@ -131,7 +151,10 @@
             </div>
         </div>
     </div>
+    <div class="mt-4">
     {{ $couriers->links() }}
+</div>
+
 </div>
 
 <script>
