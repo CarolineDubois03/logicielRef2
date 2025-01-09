@@ -119,4 +119,17 @@ class UsersController extends Controller
         return redirect()->route('admin.profile.show')->with('success', 'Mot de passe mis à jour avec succès.');
     }
 
+
+
+
+    public function search(Request $request)
+    {
+        $query = $request->get('q', '');
+        return User::where('first_name', 'LIKE', '%' . $query . '%')
+            ->orWhere('last_name', 'LIKE', '%' . $query . '%')
+            ->get(['id', 'first_name', 'last_name']);
+    }
+
+
+
 }

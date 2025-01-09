@@ -13,7 +13,6 @@ class Courier extends Model
         'year',
         'annual_id',
         'recipient',
-        'date',
         'object',
         'id_handling_user',
         'copy_to',
@@ -49,10 +48,11 @@ class Courier extends Model
     return $this->belongsToMany(User::class, 'courier_user');
 
     }
-    public function recipients()
-    {
-        return $this->belongsToMany(Recipient::class, 'courier_recipient');
-    }
+    public function couriersRecipient()
+{
+    return $this->belongsTo(Recipient::class, 'recipient'); // 'recipient' est la clé étrangère dans la table `couriers`
+}
+
     
 
     protected $casts = [

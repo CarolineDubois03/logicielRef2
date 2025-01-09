@@ -14,11 +14,12 @@ class UserSeeder extends Seeder
             'last_name' => 'Admin',
             'first_name' => 'User',
             'email' => 'admin@example.com',
-            'login' => 'admin',
+            'login' => 'admin1234',
             'password' => Hash::make('password'),
             'id_service' => 1,
         ]);
 
         User::factory(10)->create(); // Génère 10 utilisateurs aléatoires
+
     }
 }
