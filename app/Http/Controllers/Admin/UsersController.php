@@ -2,134 +2,66 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Illuminate\Http\Request;
-use App\Models\User;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\Controller;
-
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 
 class UsersController extends Controller
 {
+    // Afficher la liste des utilisateurs
     public function index()
     {
-        // Logique pour afficher la liste des utilisateurs
+        $users = User::all();
+        return view('admin.settings', compact('users'));
     }
 
-    /**
-     * Affiche le formulaire de création d'un nouvel utilisateur.
-     */
-    public function create()
-    {
-        return view('admin.profile.form', ['user' => new User()]);
-    }
-
-    /**
-     * Stocke un nouvel utilisateur dans la base de données.
-     */
+    // Enregistrer un nouvel utilisateur
     public function store(Request $request)
     {
-        // Logique pour stocker un nouvel utilisateur
-    }
-
-    /**
-     * Affiche les détails d'un utilisateur spécifique.
-     */
-    public function show()
-    {
-        return view('admin.profile.show');
-    }
-    
-    /**
-     * Affiche le formulaire de modification d'un utilisateur.
-     */
-    public function edit()
-    {
-        $user = Auth::user();
-        return view('admin.profile.edit', compact('user'));
-    }
-
-    /**
-     * Met à jour les informations d'un utilisateur dans la base de données.
-     */
-    public function update(Request $request, $id)
-    {
-        // Récupérer l'ID de l'utilisateur à partir de la requête
-        $userId = $request->input('user_id');
-    
-        // Valider les données du formulaire
-        $validatedData = $request->validate([
+        $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'login' => 'required|string|max:255|unique:users,login,'.$userId,
-            'email' => 'required|string|email|max:255|unique:users,email,'.$userId,
+            'email' => 'required|string|email|max:255|unique:users,email',
+            'password' => 'required|string|min:8|confirmed', // Ajouté pour confirmation du mot de passe si besoin
         ]);
-    
-        // Récupérer l'utilisateur à mettre à jour
-        $user = User::findOrFail($userId);
-    
-        // Mettre à jour les informations de l'utilisateur
-        $user->update([
-            'first_name' => $validatedData['first_name'],
-            'last_name' => $validatedData['last_name'],
-            'login' => $validatedData['login'],
-            'email' => $validatedData['email'],
+
+        User::create([
+            'first_name' => $request->input('first_name'),
+            'last_name' => $request->input('last_name'),
+            'email' => $request->input('email'),
+            'password' => Hash::make($request->input('password')), // Hachage du mot de passe
         ]);
-    
-        // Rediriger l'utilisateur avec un message de succès
-        return redirect()->route('admin.profile.show')->with('success', 'Profil mis à jour avec succès.');
-    }
-    
 
-    /**
-     * Supprime un utilisateur de la base de données.
-     */
-    public function destroy(string $id)
-    {
-        // Logique pour supprimer un utilisateur
+        return redirect()->route('users.index')->with('success', 'Utilisateur ajouté avec succès.');
     }
 
-    /**
-     * Affiche le formulaire de changement de mot de passe.
-     */
-    public function showChangePasswordForm()
+    // Mettre à jour un utilisateur existant
+    public function update(Request $request, $id)
     {
-        return view('admin.profile.change-password');
-    }
+        $user = User::findOrFail($id);
 
-    /**
-     * Met à jour le mot de passe de l'utilisateur.
-     */
-    public function changePassword(Request $request)
-    {
         $request->validate([
-            'old_password' => 'required',
-            'password' => 'required|min:8|confirmed',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
         ]);
 
-        $user = Auth::user();
+        $user->update([
+            'first_name' => $request->input('first_name'),
+            'last_name' => $request->input('last_name'),
+            'email' => $request->input('email'),
+        ]);
 
-        if (!Hash::check($request->old_password, $user->password)) {
-            return back()->withErrors(['old_password' => 'Ancien mot de passe incorrect']);
-        }
-
-        $user->password = Hash::make($request->password);
-        $user->save();
-
-        return redirect()->route('admin.profile.show')->with('success', 'Mot de passe mis à jour avec succès.');
+        return redirect()->route('users.index')->with('success', 'Utilisateur modifié avec succès.');
     }
 
-
-
-
-    public function search(Request $request)
+    // Supprimer un utilisateur
+    public function destroy($id)
     {
-        $query = $request->get('q', '');
-        return User::where('first_name', 'LIKE', '%' . $query . '%')
-            ->orWhere('last_name', 'LIKE', '%' . $query . '%')
-            ->get(['id', 'first_name', 'last_name']);
+        $user = User::findOrFail($id);
+        $user->delete();
+
+        return redirect()->route('users.index')->with('success', 'Utilisateur supprimé avec succès.');
     }
-
-
-
 }

@@ -9,7 +9,7 @@ class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'id_service'];
+    protected $fillable = ['name'];
     
     public function couriersType()
     {

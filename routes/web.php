@@ -69,7 +69,14 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     
     Route::post('recipients/store', [RecipientController::class, 'store'])->name('recipients.store');
     Route::post('recipients/update/{id}', [RecipientController::class, 'update'])->name('recipients.update');
+    Route::put('recipients/{id}', [RecipientController::class, 'update'])->name('admin.recipients.update');
+
     Route::delete('recipients/{id}', [RecipientController::class, 'destroy'])->name('recipients.destroy');
+
+    Route::resource('categories', CategoryController::class)
+    ->except(['show', 'create']);
+    Route::resource('users', UsersController::class)->except(['show']);
+
 
 
         
