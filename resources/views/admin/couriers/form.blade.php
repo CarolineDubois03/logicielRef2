@@ -61,8 +61,8 @@
 
                 <div>
                     <label for="document_path" class="block text-lg font-medium text-gray-700">Classement</label>
-                    <input type="file" name="document_path" id="document_path" class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
-                    <p class="text-sm text-gray-500 mt-1">Fichiers acceptés : PDF, DOC, DOCX.</p>
+                    <input type="texte" name="document_path" id="document_path"class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                    <p class="text-sm text-gray-500 mt-1">Veuillez indiquer un chemin.</p>
                 </div>
 
                 <div>

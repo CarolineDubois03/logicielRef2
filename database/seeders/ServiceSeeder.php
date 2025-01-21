@@ -10,8 +10,8 @@ class ServiceSeeder extends Seeder
     public function run()
     {
         $services = [
-            ['name' => 'IT', 'description' => 'Service informatique'],
-            ['name' => 'HR', 'description' => 'Ressources humaines'],
+            ['name' => 'SDN', 'description' => 'Service développement numérique'],
+            ['name' => 'SG', 'description' => 'Service secrétariat général'],
             ['name' => 'Finance', 'description' => 'Service financier'],
             ['name' => 'Marketing', 'description' => 'Service marketing'],
             ['name' => 'Sales', 'description' => 'Service commercial'],

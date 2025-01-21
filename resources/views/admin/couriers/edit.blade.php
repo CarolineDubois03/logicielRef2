@@ -37,6 +37,7 @@
                     <input type="text" name="object" id="object" value="{{ old('object', $courier->object) }}" class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
                 </div>
 
+               
                 <div>
                     <label for="recipient" class="block text-lg font-medium text-gray-700">Destinataire</label>
                     <select id="recipient" name="recipient" class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 select2-recipient">
@@ -61,24 +62,12 @@
                         @endforeach
                     </select>
                 </div>
-
                 <div>
                     <label for="document_path" class="block text-lg font-medium text-gray-700">Classement</label>
-                    <input type="file" name="document_path" id="document_path" class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
-                    @if($courier->document_path)
-                        <p class="mt-2 text-sm text-gray-500">
-                            Fichier actuel :
-                            <a href="{{ Storage::url($courier->document_path) }}" target="_blank" class="text-blue-500 underline">
-                                Télécharger
-                            </a>
-                        </p>
-                    @else
-                        <p class="mt-2 text-sm text-gray-500">Aucun fichier associé.</p>
-                    @endif
+                    <input type="text" name="document_path" id="document_path" value="{{old('document_path', $courier->document_path) }}" class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                </div>     
 
-                    <p class="text-sm text-gray-500 mt-1">Fichiers acceptés : PDF, DOC, DOCX.</p>
-                </div>
-
+               
                 <div>
                     <label for="copy_to" class="block text-lg font-medium text-gray-700">Copie à</label>
                     <select id="copy_to" name="copy_to[]" class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 select2-copy-to" multiple>
@@ -121,19 +110,20 @@ $(document).ready(function () {
     });
 
     $('.select2-copy-to').select2({
-        placeholder: 'Rechercher et ajouter des utilisateurs',
-        ajax: {
-            url: '{{ route("admin.users.search") }}',
-            dataType: 'json',
-            delay: 250,
-            data: params => ({ q: params.term }),
-            processResults: data => ({
-                results: data.map(user => ({ id: user.id, text: user.first_name + ' ' + user.last_name }))
-            })
-        },
-        multiple: true,
-        allowClear: true
-    });
+    placeholder: 'Rechercher et ajouter des utilisateurs',
+    ajax: {
+        url: '{{ route("admin.users.search") }}',
+        dataType: 'json',
+        delay: 250,
+        data: params => ({ q: params.term }), // Envoie le terme de recherche
+        processResults: data => ({
+            results: data // Les résultats sont renvoyés directement
+        })
+    },
+    multiple: true,
+    allowClear: true
+});
+
 });
 </script>
 @endsection

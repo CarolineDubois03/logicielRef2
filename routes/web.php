@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AgentController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\RegisterController;
@@ -9,6 +10,7 @@ use App\Http\Controllers\Admin\UsersController;
 use App\Http\Controllers\Admin\CourierController;
 use App\Http\Controllers\Admin\RecipientController;
 use App\Http\Controllers\Admin\CategoryController;
+
 
 
 /*
@@ -76,7 +78,10 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::resource('categories', CategoryController::class)
     ->except(['show', 'create']);
     Route::resource('users', UsersController::class)->except(['show']);
+    Route::put('users/{id}', [UsersController::class, 'update'])->name('users.update'); 
 
+    Route::resource('agents', UsersController::class)->except(['show']);
+    Route::post('agents/add', [AgentController::class, 'addAgent'])->name('agents.add');
 
 
         

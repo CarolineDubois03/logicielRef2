@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use App\Exports\CouriersExport;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Storage;
+use Psy\Readline\Hoa\Console;
 
 class CourierController extends Controller
 {
@@ -87,8 +88,9 @@ class CourierController extends Controller
             'id_handling_user' => $request->input('id_handling_user'),
             'recipient' => $request->input('recipient'),
             'category' => $request->input('category'),
+            'document_path' => $request->input('document_path'),
         ]);
-        $courier->document_path = $validated['document_path']; // Chemin réseau
+     
     
         if ($request->has('copy_to')) {
             $courier->copiedUsers()->sync($request->input('copy_to'));
@@ -127,13 +129,13 @@ class CourierController extends Controller
     
         // Récupérer le courrier à mettre à jour
         $courier = Courier::findOrFail($id);
-    
+        
         // Mettre à jour les données du courrier
         $courier->object = $validated['object'];
         $courier->recipient = $validated['recipient'];
         $courier->id_handling_user = $validated['id_handling_user'];
         $courier->category = $validated['category'] ?? null;
-        $courier->document_path = $validated['document_path'] ?? $courier->document_path; // Ne pas écraser si vide
+        $courier->document_path = $validated['document_path'] ?? $courier->document_path;
     
         $courier->save();
     

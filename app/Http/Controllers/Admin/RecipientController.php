@@ -27,7 +27,7 @@ class RecipientController extends Controller
         // Créer le destinataire
         $recipient = Recipient::create(['label' => $request->input('label')]);
     
-        return redirect()->route('admin.courier.settings')->with('success', 'Destinataire créé avec succès.');
+        return redirect()->route('admin.courier.settings', ['tab' => 'recipients'])->with('success', 'Destinataire créé avec succès.');
     }
     
 
@@ -39,7 +39,7 @@ class RecipientController extends Controller
         $recipient->label = $request->input('label');
         $recipient->save();
     
-        return redirect()->route('admin.courier.settings')->with('success', 'Destinataire mis à jour avec succès.');
+        return redirect()->route('admin.courier.settings', ['tab' => 'recipients'])->with('success', 'Destinataire mis à jour avec succès.');
     }
     
     public function destroy($id)

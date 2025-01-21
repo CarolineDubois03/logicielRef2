@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Category;
+use App\Models\Recipient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -33,12 +35,13 @@ class UsersController extends Controller
             'password' => Hash::make($request->input('password')), // Hachage du mot de passe
         ]);
 
-        return redirect()->route('users.index')->with('success', 'Utilisateur ajouté avec succès.');
+        return redirect()->route('admin.courier.settings', ['tab' => 'users'])->with('success', 'Utilisateur ajouté avec succès.');
     }
 
     // Mettre à jour un utilisateur existant
     public function update(Request $request, $id)
     {
+        dd($request->all());
         $user = User::findOrFail($id);
 
         $request->validate([
@@ -53,7 +56,13 @@ class UsersController extends Controller
             'email' => $request->input('email'),
         ]);
 
-        return redirect()->route('users.index')->with('success', 'Utilisateur modifié avec succès.');
+        return redirect()->route('admin.courier.settings', ['tab' => 'users'])->with('success', 'Utilisateur modifié avec succès.');
+    }
+
+    public function show($id)
+    {
+        $user = User::findOrFail($id);
+        return view('admin.users.show', compact('user'));
     }
 
     // Supprimer un utilisateur
@@ -62,6 +71,35 @@ class UsersController extends Controller
         $user = User::findOrFail($id);
         $user->delete();
 
-        return redirect()->route('users.index')->with('success', 'Utilisateur supprimé avec succès.');
+        return redirect()->route('admin.courier.settings', ['tab' => 'users'])->with('success', 'Utilisateur supprimé avec succès.');
     }
+
+    public function search(Request $request)
+    {
+        try {
+            $query = $request->get('q'); // Terme de recherche
+            $users = User::where('first_name', 'like', "%{$query}%")
+                         ->orWhere('last_name', 'like', "%{$query}%")
+                         ->limit(10)
+                         ->get();
+    
+            $results = $users->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'text' => $user->first_name . ' ' . $user->last_name,
+                ];
+            });
+    
+            return response()->json($results); // Retourne les données au format JSON
+        } catch (\Exception $e) {
+            // Log l'erreur pour la diagnostiquer
+            \Log::error($e->getMessage());
+            return response()->json(['error' => 'Une erreur s\'est produite.'], 500);
+        }
+    }
+
+
+    
+    
+
 }

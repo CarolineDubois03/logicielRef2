@@ -165,8 +165,14 @@
                     <td>{{ $courier->couriersRecipient->label ?? 'Non défini' }}</td>
                     <td>{{ $courier->created_at->format('d/m/Y') }}</td>
                     <td>{{ $courier->object }}</td>
-                    <td>{{ $courier->handlingUser->last_name }} {{ $courier->handlingUser->first_name }}</td>
                     <td>
+                        @if($courier->handlingUser)
+                            {{ $courier->handlingUser->last_name }} {{ $courier->handlingUser->first_name }}
+                        @else
+                            Non défini
+                        @endif
+                    </td>
+                                        <td>
                         @if($courier->copiedUsers->isNotEmpty())
                             @foreach($courier->copiedUsers as $user)
                                 <span class="inline-block bg-gray-200 rounded px-2 py-1 text-xs text-gray-700">

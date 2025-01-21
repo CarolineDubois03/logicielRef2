@@ -21,7 +21,7 @@ class CategoryController extends Controller
         $request->validate(['name' => 'required|string|max:255']);
         Category::create(['name' => $request->input('name')]);
 
-        return redirect()->route('admin.courier.settings')
+        return redirect()->route('admin.courier.settings', ['tab' => 'categories'])
             ->with('success', 'Catégorie ajoutée avec succès.');
     }
 
@@ -32,7 +32,7 @@ class CategoryController extends Controller
         $request->validate(['name' => 'required|string|max:255']);
         $category->update(['name' => $request->input('name')]);
 
-        return redirect()->route('admin.courier.settings')
+        return redirect()->route('admin.courier.settings', ['tab' => 'categories'])
             ->with('success', 'Catégorie modifiée avec succès.');
     }
 
