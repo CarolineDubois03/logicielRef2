@@ -111,33 +111,68 @@
 </style>
 
 <div class="container mx-auto p-4">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">Liste des courriers</h1>
+    <h1 class="text-3xl font-bold text-gray-800 mb-8">Liste des courriers</h1>
 
-    <div class="flex justify-between items-center mb-4">
-        <form action="{{ route('admin.courier.index') }}" method="GET" class="flex items-center">
+    <!-- Barre de recherche et nombre de courriers par page -->
+    <div class="flex items-center gap-4">
+     
+       
+         <!-- Sélection de l'année -->
+         <form action="{{ route('admin.courier.index') }}" method="GET" class="flex items-center">
             <label for="year" class="mr-2 text-gray-600">Année :</label>
-            <select name="year" id="year" class="border rounded px-2 py-1">
+            <select name="year" id="year" class="border rounded px-2 py-1" onchange="this.form.submit()">
                 @foreach($years as $year)
                     <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>{{ $year }}</option>
                 @endforeach
             </select>
-            <button type="submit" class="ml-2 bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-700">Filtrer</button>
+            <input type="hidden" name="search" value="{{ request('search') }}">
+            <input type="hidden" name="perPage" value="{{ request('perPage', 20) }}">
         </form>
+    </div>
 
-        <!-- Barre de recherche -->
+    <!-- Année et boutons d'action -->
+    <div class="flex items-center justify-between mb-2 ">
+        <!-- Sélection du nombre de courriers par page -->
         <form action="{{ route('admin.courier.index') }}" method="GET" class="flex items-center">
+            <label for="perPage" class="mr-2 text-gray-600">Courriers par page :</label>
+            <select name="perPage" id="perPage" class="border rounded px-2 py-1" onchange="this.form.submit()">
+                <option value="10" {{ request('perPage') == 10 ? 'selected' : '' }}>10</option>
+                <option value="20" {{ request('perPage') == 20 ? 'selected' : '' }}>20</option>
+                <option value="50" {{ request('perPage') == 50 ? 'selected' : '' }}>50</option>
+                <option value="100" {{ request('perPage') == 100 ? 'selected' : '' }}>100</option>
+            </select>
+            <input type="hidden" name="year" value="{{ request('year', $selectedYear) }}">
+            <input type="hidden" name="search" value="{{ request('search') }}">
+        </form>
+           <!-- Barre de recherche -->
+           <form action="{{ route('admin.courier.index') }}" method="GET" class="flex items-center">
             <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Rechercher par objet ou destinataire" 
                 class="border rounded px-4 py-2 w-64">
             <button type="submit" class="ml-2 bg-gray-500 text-white py-1 px-3 rounded hover:bg-gray-700">Rechercher</button>
         </form>
 
-        <div>
+
+        <!-- Boutons d'action -->
+        <div class="flex items-center gap-4">
             <a href="{{ route('admin.courier.create') }}" class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-700">+ Ajouter</a>
-            <a href="{{ route('admin.courier.settings') }}" class="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-700">Configurer</a>
+            @if(auth()->user()->role === 'admin' || auth()->user()->role === 'responsable')
+                <a href="{{ route('admin.courier.settings') }}" class="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-700">Configurer</a>
+            @endif
+            <button id="deleteSelected" class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                Supprimer sélection
+            </button>
+            <a href="{{ route('admin.couriers.export', ['year' => $selectedYear]) }}" class="bg-yellow-500 text-white py-1 px-3 rounded hover:bg-yellow-600">
+                Exporter Excel
+            </a>
         </div>
     </div>
 
-    <div class="overflow-x-auto">
+
+
+
+
+    
+
         <table class="border border-gray-300">
             <thead>
                 <tr>
@@ -208,10 +243,65 @@
 </div>
 
 <script>
-    // Gérer la sélection "Tout sélectionner"
-    document.getElementById('selectAll').addEventListener('change', function() {
-        const checkboxes = document.querySelectorAll('.courierCheckbox');
-        checkboxes.forEach(checkbox => checkbox.checked = this.checked);
+   document.addEventListener('DOMContentLoaded', () => {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.courierCheckbox');
+    const deleteButton = document.getElementById('deleteSelected');
+
+    // Fonction pour afficher ou masquer le bouton "Supprimer sélection"
+    function toggleDeleteButton() {
+        const anyChecked = Array.from(checkboxes).some(checkbox => checkbox.checked);
+        deleteButton.style.display = anyChecked ? 'inline-block' : 'none';
+    }
+
+    // Gérer la sélection/déselection globale
+    selectAllCheckbox.addEventListener('change', () => {
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+        toggleDeleteButton();
     });
+
+    // Gérer les changements sur chaque case individuelle
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', toggleDeleteButton);
+    });
+
+    // Vérifier l'état initial au chargement
+    toggleDeleteButton();
+
+    // Gestion de la suppression de masse
+    deleteButton.addEventListener('click', async () => {
+        const selectedIds = Array.from(checkboxes)
+            .filter(checkbox => checkbox.checked)
+            .map(checkbox => checkbox.value);
+
+        if (selectedIds.length > 0 && confirm('Êtes-vous sûr de vouloir supprimer les éléments sélectionnés ?')) {
+            try {
+                const response = await fetch('{{ route("admin.courier.destroySelected") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    body: JSON.stringify({ ids: selectedIds }),
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert('Les courriers sélectionnés ont été supprimés avec succès.');
+                    window.location.reload(); // Recharge la page
+                } else {
+                    alert('Une erreur s\'est produite.');
+                }
+            } catch (error) {
+                console.error('Erreur lors de la suppression :', error);
+                alert('Une erreur s\'est produite.');
+            }
+        }
+    });
+});
+
+
 </script>
 @endsection

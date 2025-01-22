@@ -43,12 +43,13 @@ Route::post('/register', [RegisterController::class, 'register']);
 Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     
     
-    Route::get('export-couriers', [CourierController::class, 'export'])->name('couriers.export');
+    Route::get('couriers/export', [CourierController::class, 'export'])->name('couriers.export');
 
     // Profil de l'utilisateur
-    Route::get('profile', [UsersController::class, 'show'])->name('profile.show');
-    Route::get('profile/edit', [UsersController::class, 'edit'])->name('profile.edit');
-    Route::put('profile/update/{id}', [UsersController::class, 'update'])->name('profile.update');
+    Route::get('profile/{id}', action: [UsersController::class, 'show'])->name('profile.show');
+    Route::put('profile/update/{id}', action: [UsersController::class, 'updateProfile'])->name('profile.updateProfile');
+    Route::get('profile/edit/{id}', [UsersController::class, 'edit'])->name('profile.edit');
+
     Route::get('profile/change-password', [UsersController::class, 'showChangePasswordForm'])->name('profile.showChangePasswordForm');
     Route::post('profile/change-password', [UsersController::class, 'changePassword'])->name('profile.change-password');
     
@@ -61,6 +62,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::resource('courier', CourierController::class);
     Route::delete('courier', [CourierController::class, 'destroy'])->name('courier.destroy');
     Route::get('courier/{id}/edit', [CourierController::class, 'edit'])->name('courier.edit');
+    Route::post('courier/destroy-selected', [CourierController::class, 'destroySelected'])->name('courier.destroySelected');
 
     Route::get('couriers/settings', [CourierController::class, 'settings'])->name('courier.settings');
 
@@ -79,10 +81,12 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     ->except(['show', 'create']);
     Route::resource('users', UsersController::class)->except(['show']);
     Route::put('users/{id}', [UsersController::class, 'update'])->name('users.update'); 
+    Route::get('users/{id}', [UsersController::class, 'show'])->name('users.show');
 
     Route::resource('agents', UsersController::class)->except(['show']);
     Route::post('agents/add', [AgentController::class, 'addAgent'])->name('agents.add');
-
+    
+    Route::put('agents/remove/{id}', [AgentController::class, 'removeAgent'])->name('agents.remove');
 
         
 });

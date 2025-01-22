@@ -4,12 +4,73 @@
 @include('nav')
 
 @section('content')
-<style></style>
+<style>
+#flash-message {
+    opacity: 1;
+    transition: opacity 0.5s ease-in-out;
+}
+/* Style commun pour les boutons Ajouter */
+.btn-add {
+    background-color: #38a169; /* Vert */
+    color: white;
+    font-size: 0.875rem; /* Texte légèrement plus grand */
+    padding: 0.4rem 1rem; /* Un peu plus large */
+    border-radius: 0.375rem; /* Bord arrondi */
+    transition: background-color 0.2s ease-in-out;
+}
+
+.btn-add:hover {
+    background-color: #2f855a; /* Vert plus foncé */
+}
+
+/* Style commun pour les boutons Modifier */
+.btn-edit {
+    background-color: #3182ce; /* Bleu */
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.btn-edit:hover {
+    background-color: #2b6cb0; /* Bleu plus foncé */
+}
+
+/* Style commun pour les boutons Supprimer */
+.btn-delete {
+    background-color: #e53e3e; /* Rouge */
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 0.375rem;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.btn-delete:hover {
+    background-color: #c53030; /* Rouge plus foncé */
+}
+
+
+</style>
+
 <div class="px-8 py-10 bg-gray-50">
+    <!-- Bouton de retour -->
+    <div class="flex justify-start mb-6">
+        <a href="{{ route('admin.courier.index') }}" class="text-blue-500 hover:underline flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" class="fill-current h-5 w-5 mr-1">
+                <path fill-rule="evenodd" d="M11.293 4.293a1 1 0 011.414 1.414l-4 4a1 1 0 010 1.414l4 4a1 1 0 01-1.414 1.414l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+            </svg>
+            Retour
+        </a>
+    </div>
+
     <div class="max-w-5xl mx-auto bg-white shadow-lg rounded-xl">
         <div class="px-8 py-6 border-b border-gray-200">
             <h1 class="text-2xl font-bold text-gray-800">Paramètres</h1>
+            
         </div>
+
         
 
         <div class="px-8 py-6">
@@ -39,9 +100,10 @@
                 <div id="agents" class="tab-content">
     <h2 class="text-lg font-bold mb-4">Liste des agents</h2>
     <div class="mb-4">
-    <button class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-700" onclick="toggleModal('add-agent-modal')">
-        + Ajouter un agent
+    <button class="btn-add" onclick="toggleModal('add-agent-modal')">
+    + Ajouter un agent
     </button>
+
 </div>
 
     <table class="w-full border-collapse">
@@ -55,26 +117,31 @@
             </tr>
         </thead>
         <tbody>
+        @if($agents->isEmpty())
+    <p>Aucun agent trouvé.</p>
+@endif
+
             @foreach($agents as $agent)
+            
+
             <tr>
                 <td class="border px-4 py-2">{{ $agent->last_name }}</td>
                 <td class="border px-4 py-2">{{ $agent->first_name }}</td>
                 <td class="border px-4 py-2">{{ $agent->email }}</td>
                 <td class="border px-4 py-2">{{ $agent->role }}</td>
                 <td class="border px-4 py-2">
-                    <!-- Modifier un agent -->
-                    <button class="bg-blue-500 text-white py-1 px-3 rounded hover:bg-blue-700" onclick="editAgent({{ $agent->id }}, '{{ $agent->last_name }}', '{{ $agent->first_name }}', '{{ $agent->email }}', '{{ $agent->role }}')">
-                        Modifier
+                    <!-- Retirer l'utilisateur des agents -->
+                <form action="{{ route('admin.agents.remove', $agent->id) }}" method="POST" class="inline">
+                    @csrf
+                    @method('PUT')
+                    <button type="submit" class="btn-delete">
+                        Retirer des agents
                     </button>
-                    <!-- Supprimer un agent -->
-                    <form action="{{ route('admin.agents.destroy', $agent->id) }}" method="POST" class="inline">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-700">Supprimer</button>
-                    </form>
-                </td>
-            </tr>
-            @endforeach
+                </form>
+            </td>
+        </tr>
+        @endforeach
+            
         </tbody>
     </table>
 </div>
@@ -85,10 +152,14 @@
         <h2 class="text-lg font-bold mb-4 text-gray-800">Ajouter un agent</h2>
         
         <label for="user_id" class="block text-sm font-medium text-gray-700">Sélectionner un utilisateur</label>
-        <select id="user_id" name="user_id" class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
-            <option value="" disabled selected>-- Sélectionnez un utilisateur --</option>
-            
-        </select>
+        <select id="user_id" name="user_id" class="form-select">
+    <option value="" disabled selected>-- Sélectionnez un utilisateur --</option>
+    @foreach($nonAgents as $user)
+        <option value="{{ $user->id }}">{{ $user->last_name }} {{ $user->first_name }}</option>
+    @endforeach
+    
+</select>
+
 
         <div class="mt-4 flex justify-end">
             <button type="button" class="mr-2 bg-gray-500 text-white py-1 px-3 rounded hover:bg-gray-700" onclick="toggleModal('add-agent-modal')">Annuler</button>
@@ -109,7 +180,7 @@
 
     <!-- Bouton pour ajouter une catégorie -->
     <div class="mb-4">
-        <button class="bg-green-500 text-white py-0.5 px-1.5 text-xs rounded hover:bg-green-700" onclick="toggleModal('add-category-modal')">
+        <button class="btn-add" onclick="toggleModal('add-category-modal')">
             + Ajouter une catégorie
         </button>
     </div>
@@ -130,16 +201,20 @@
                 <td class="border px-4 py-2">{{ $category->created_at->format('d/m/Y') }}</td>
                 <td class="border px-4 py-2">
                     <!-- Bouton pour modifier une catégorie -->
-                    <button class="bg-blue-500 text-white py-0.5 px-1.5 text-xs rounded hover:bg-blue-700" onclick="editCategory({{ $category->id }}, '{{ $category->name }}')">
+                    <button class="btn-edit" onclick="editCategory({{ $category->id }}, '{{ $category->name }}')">
                         Modifier
                     </button>
+
 
                     <!-- Formulaire pour supprimer une catégorie -->
                     <form action="{{ route('admin.categories.destroy', $category->id) }}" method="POST" class="inline">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="bg-red-500 text-white py-0.5 px-1.5 text-xs rounded hover:bg-red-700">Supprimer</button>
+                        <button type="submit" class="btn-delete">
+                            Supprimer
+                        </button>
                     </form>
+
                 </td>
             </tr>
             @endforeach
@@ -191,7 +266,7 @@
 
     <!-- Bouton pour ajouter un utilisateur -->
     <div class="mb-4">
-        <button class="bg-green-500 text-white py-0.5 px-1.5 text-xs rounded hover:bg-green-700" onclick="toggleModal('add-user-modal')">
+        <button  class="btn-add" onclick="toggleModal('add-user-modal')">
             + Ajouter un utilisateur
         </button>
     </div>
@@ -219,7 +294,7 @@
 
                 <td class="border px-4 py-2">
                     <!-- Bouton pour modifier un utilisateur -->
-                    <button class="bg-blue-500 text-white py-0.5 px-1.5 text-xs rounded hover:bg-blue-700" onclick="editUser({{ $user->id }}, '{{ $user->first_name }}', '{{ $user->last_name }}', '{{ $user->email }}', '{{$user->role}}', '{{$user->id_service}}')">
+                    <button class="btn-edit" onclick="editUser({{ $user->id }}, '{{ $user->first_name }}', '{{ $user->last_name }}', '{{ $user->email }}', '{{$user->role}}', '{{$user->id_service}}')">
                         Modifier
                     </button>
 
@@ -227,7 +302,7 @@
                     <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="bg-red-500 text-white py-0.5 px-1.5 text-xs rounded hover:bg-red-700">Supprimer</button>
+                        <button type="submit" class="btn-delete">Supprimer</button>
                     </form>
                 </td>
             </tr>
@@ -274,6 +349,29 @@
             <label for="edit-user-email" class="block text-sm font-medium text-gray-700 mt-4">Email</label>
             <input type="email" id="edit-user-email" name="email" class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
 
+            <label for="edit-user-role" class="block text-sm font-medium text-gray-700 mt-4">Rôle</label>
+                <select 
+                    id="edit-user-role" 
+                    name="role" 
+                    class="form-select"
+                    @if(auth()->user()->role !== 'admin') disabled @endif>
+                    <option value="admin">Admin</option>
+                    <option value="responsable">Responsable</option>
+                    <option value="user">Utilisateur</option>
+                </select>
+
+                <label for="edit-user-id_service" class="block text-sm font-medium text-gray-700 mt-4">Service</label>
+                <select 
+                    id="edit-user-id_service" 
+                    name="id_service" 
+                    class="form-select"
+                    @if(auth()->user()->role !== 'admin') disabled @endif>
+                    @foreach($services as $service)
+                        <option value="{{ $service->id }}">{{ $service->name }}</option>
+                    @endforeach
+                </select>
+
+            
             <div class="mt-4 flex justify-end">
                 <button type="button" class="mr-2 bg-gray-500 text-white py-0.5 px-1.5 rounded hover:bg-gray-700" onclick="toggleModal('edit-user-modal')">Annuler</button>
                 <button type="submit" class="bg-indigo-600 text-white py-0.5 px-1.5 rounded hover:bg-indigo-700">Enregistrer</button>
@@ -288,7 +386,7 @@
 
     <!-- Bouton pour ajouter un destinataire -->
     <div class="mb-4">
-        <button class="bg-green-500 text-white py-1 px-3 rounded hover:bg-green-700" onclick="toggleModal('add-recipient-modal')">
+        <button  class="btn-add" onclick="toggleModal('add-recipient-modal')">
             + Ajouter un destinataire
         </button>
     </div>
@@ -309,7 +407,7 @@
                 <td class="border px-4 py-2">{{ $recipient->created_at->format('d/m/Y') }}</td>
                 <td class="border px-4 py-2">
                     <!-- Bouton pour modifier un destinataire -->
-                    <button class="bg-blue-500 text-white py-1 px-3 text-xs rounded hover:bg-blue-700" onclick="editRecipient({{ $recipient->id }}, '{{ $recipient->label }}')">
+                    <button class="btn-edit" onclick="editRecipient({{ $recipient->id }}, '{{ $recipient->label }}')">
                         Modifier
                     </button>
 
@@ -318,7 +416,7 @@
                     <form action="{{ route('admin.recipients.destroy', $recipient->id) }}" method="POST" class="inline">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="bg-red-500 text-white py-1 px-3 text-xs rounded hover:bg-red-700">Supprimer</button>
+                        <button type="submit" class="btn-delete">Supprimer</button>
                     </form>
                 </td>
             </tr>
@@ -371,7 +469,7 @@
 
 
 function editUser(id, firstName, lastName, email, role, id_service) {
-    console.log(id, firstName, lastName, email);
+    console.log(id, firstName, lastName, email, role, id_service);
     const form = document.getElementById('edit-user-form');
     form.action = `/admin/users/${id}`;
     document.getElementById('edit-user-first-name').value = firstName;
@@ -428,6 +526,12 @@ function editUser(id, firstName, lastName, email, role, id_service) {
         }
     }
 
+    const isAdmin = "{{ auth()->user()->role }}" === "admin";
+    if (!isAdmin) {
+        document.getElementById("edit-user-role").setAttribute("disabled", "true");
+        document.getElementById("edit-user-id_service").setAttribute("disabled", "true");
+    }
+
     // Détection de l'onglet actif via l'URL
     const urlParams = new URLSearchParams(window.location.search);
     const activeTab = urlParams.get("tab") || "agents"; // "agents" est l'onglet par défaut
@@ -447,7 +551,31 @@ function editUser(id, firstName, lastName, email, role, id_service) {
         const activeTab = urlParams.get("tab") || "agents";
         activateTab(activeTab);
     });
+
+    // Gestion des messages flash
+    const flashMessage = document.getElementById('flash-message');
+    if (flashMessage) {
+        // Cacher automatiquement le message après 3 secondes
+        setTimeout(() => {
+            flashMessage.style.transition = 'opacity 0.5s';
+            flashMessage.style.opacity = '0';
+
+            setTimeout(() => {
+                flashMessage.remove();
+            }, 500); // Temps pour le fade-out
+        }, 3000); // Temps avant le fade-out
+    }
+
+    // Écouter les changements d'onglet pour cacher les messages
+    tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            if (flashMessage) {
+                flashMessage.remove();
+            }
+        });
+    });
 });
+
 
 
 </script>

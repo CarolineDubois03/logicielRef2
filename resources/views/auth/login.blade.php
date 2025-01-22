@@ -29,7 +29,7 @@
     <div class="min-h-screen flex items-center justify-center">
         <div class="bg-white w-full max-w-md rounded-xl shadow-md overflow-hidden">
             <div class="px-6 py-8">
-                <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Connexion</h1>
+                <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Connexion Archivéo</h1>
 
                 <!-- Display Errors -->
                 @if($errors->any())

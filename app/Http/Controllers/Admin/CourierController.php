@@ -8,6 +8,7 @@ use App\Models\Courier;
 use App\Models\Recipient;
 use App\Models\User;
 use App\Models\Category;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use App\Exports\CouriersExport;
 use Maatwebsite\Excel\Facades\Excel;
@@ -20,35 +21,38 @@ class CourierController extends Controller
      * Affiche la liste des courriers.
      */
     public function index(Request $request)
-    {
-        // Charger les courriers avec leurs relations
-        $query = Courier::with(['handlingUser', 'couriersRecipient', 'couriersType', 'copiedUsers']);
-    
-        // Filtrer par année si spécifié
-        $selectedYear = $request->input('year', date('Y'));
-        if ($selectedYear) {
-            $query->whereRaw("strftime('%Y', created_at) = ?", [$selectedYear]);
-        }
-    
-        // Rechercher par objet ou destinataire
-        if ($request->has('search') && !empty($request->search)) {
-            $search = $request->input('search');
-            $query->where('object', 'like', "%$search%")
-                ->orWhereHas('couriersRecipient', function ($q) use ($search) {
-                    $q->where('label', 'like', "%$search%");
-                });
-        }
-    
-        // Paginer les résultats
-        $couriers = $query->paginate(10);
-    
-        // Récupérer les années distinctes depuis les courriers
-        $years = Courier::selectRaw("strftime('%Y', created_at) as year")->distinct()->orderBy('year', 'desc')->pluck('year');
-    
-        // Retourner les courriers et autres données nécessaires à la vue
-        return view('admin.couriers.index', compact('couriers', 'years', 'selectedYear'));
+{
+    // Charger les courriers avec leurs relations
+    $query = Courier::with(['handlingUser', 'couriersRecipient', 'couriersType', 'copiedUsers']);
+
+    // Filtrer par année si spécifié
+    $selectedYear = $request->input('year', date('Y'));
+    if ($selectedYear) {
+        $query->whereYear('created_at', $selectedYear);
     }
-    
+
+    // Rechercher par objet ou destinataire
+    if ($request->has('search') && !empty($request->search)) {
+        $search = $request->input('search');
+        $query->where('object', 'like', "%$search%")
+            ->orWhereHas('couriersRecipient', function ($q) use ($search) {
+                $q->where('label', 'like', "%$search%");
+            });
+    }
+
+    // Nombre de courriers par page (par défaut : 20)
+    $perPage = $request->input('perPage', 20);
+
+    // Paginer les résultats
+    $couriers = $query->paginate($perPage);
+
+    // Récupérer les années distinctes depuis les courriers
+    $years = Courier::selectRaw("strftime('%Y', created_at) as year")->distinct()->orderBy('year', 'desc')->pluck('year');
+
+    // Retourner les courriers et autres données nécessaires à la vue
+    return view('admin.couriers.index', compact('couriers', 'years', 'selectedYear', 'perPage'));
+}
+
 
 
     /**
@@ -59,8 +63,9 @@ class CourierController extends Controller
         $users = User::all(); // Liste des utilisateurs pour les assignations
         $categories = Category::all(); // Liste des catégories
         $recipients = Recipient::all(); // Liste des destinataires existants
+        $agents =  User::where('id_service', 2)->get();
 
-        return view('admin.couriers.form', ['courier' => new Courier()], compact('users', 'categories', 'recipients'));
+        return view('admin.couriers.form', ['courier' => new Courier()], compact('users', 'categories', 'recipients', 'agents'));
     }
 
     /**
@@ -110,8 +115,11 @@ class CourierController extends Controller
         // Récupérer les utilisateurs (agents ou utilisateurs) pour les options de copie à
         $users = User::all();
 
+        $agents =  User::where('id_service', 2)->get();
+
+
         // Retourner la vue d'édition avec les données nécessaires
-        return view('admin.couriers.edit', compact('courier', 'categories', 'users'));
+        return view('admin.couriers.edit', compact('courier', 'categories', 'users', 'agents'));
     }
 
     
@@ -169,37 +177,53 @@ class CourierController extends Controller
         return redirect()->route('admin.couriers.index')->with('success', 'Courrier supprimé avec succès.');
     }
 
-    public function export()
+    public function export(Request $request)
     {
-        return Excel::download(new CouriersExport, 'couriers.xlsx');
-    }
+        $year = $request->input('year', now()->year); // Année actuelle par défaut
+      
 
+        return Excel::download(new CouriersExport($year), "couriers_{$year}.xlsx");
+    }
+    
+    
     public function settings()
     {
         // Récupérez les données nécessaires
         $users = User::all(); // Récupère tous les utilisateurs
         $recipients = Recipient::all(); // Récupère tous les destinataires
         $categories = Category::all(); // Récupère toutes les catégories
-        $agents = User::where('role', 'agent')->get(); // Filtrez les agents si nécessaire
+        $agents =  $agents = User::where('id_service', 2)->get();
+
+    
+        // Récupérer les utilisateurs qui ne sont pas agents
+        $nonAgents = User::where('id_service', '!=', 2)
+                        ->orWhereNull('id_service')
+                        ->get();
+
+        $services = Service::all(); // Récupère tous les services
     
         // Passez les variables à la vue
-        return view('admin.couriers.settings', compact('users', 'recipients', 'categories', 'agents'));
+        return view('admin.couriers.settings', compact('users', 'recipients', 'categories', 'agents', 'nonAgents', 'services'));
     }
-    
 
-
-public function download($id)
+    public function destroySelected(Request $request)
 {
-    $courier = Courier::findOrFail($id);
+    $ids = $request->input('ids');
 
-    if ($courier->document_path && Storage::exists($courier->document_path)) {
-        $filename = basename($courier->document_path); // Nom du fichier
-
-        return Storage::download($courier->document_path, $filename); // Télécharge avec le bon nom
+    if (!$ids || !is_array($ids)) {
+        return response()->json(['success' => false, 'message' => 'Aucun identifiant fourni.'], 400);
     }
 
-    return redirect()->back()->with('error', 'Fichier introuvable.');
+    try {
+        Courier::whereIn('id', $ids)->delete();
+        return response()->json(['success' => true]);
+    } catch (\Exception $e) {
+        \Log::error('Erreur lors de la suppression de masse : ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => 'Une erreur s\'est produite.'], 500);
+    }
 }
+
+    
 
 
 

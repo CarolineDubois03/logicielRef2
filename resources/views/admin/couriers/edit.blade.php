@@ -5,12 +5,15 @@
 
 @section('content')
 <div class="px-8 py-10 bg-gray-50">
+<div class="flex justify-start mb-6">
 <a href="{{ route('admin.courier.index') }}" class="text-blue-500 hover:underline flex items-center">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 18a1 1 0 01-.707-.293l-7-7a1 1 0 010-1.414l7-7a1 1 0 011.414 1.414L4.414 10H18a1 1 0 110 2H4.414l6.293 6.293A1 1 0 0110 18z" clip-rule="evenodd" />
                 </svg>
                 Retour
             </a>
+            </div>
+            
     <div class="max-w-5xl mx-auto bg-white shadow-lg rounded-xl">
         <div class="px-8 py-6 border-b border-gray-200 flex items-center justify-between">
             
@@ -49,10 +52,26 @@
                 </div>
 
                 <div>
-                    <label for="id_handling_user" class="block text-lg font-medium text-gray-700">Agent traitant</label>
-                    <input type="text" id="id_handling_user" value="{{ $courier->handlingUser->first_name }} {{ $courier->handlingUser->last_name }}" class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 bg-gray-100 shadow-sm focus:ring-0 focus:border-gray-300" readonly>
-                    <input type="hidden" name="id_handling_user" value="{{ $courier->handlingUser->id }}">
-                </div>
+        <label for="id_handling_user" class="block text-lg font-medium text-gray-700">Agent traitant</label>
+
+            @if(auth()->user()->role === 'admin' || auth()->user()->role === 'responsable')
+                <!-- Champ modifiable (select) -->
+                <select id="id_handling_user" name="id_handling_user" class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+                    @foreach($agents as $agent)
+                        <option value="{{ $agent->id }}" {{ $courier->id_handling_user == $agent->id ? 'selected' : '' }}>
+                            {{ $agent->first_name }} {{ $agent->last_name }}
+                        </option>
+                    @endforeach
+                </select>
+                <p class="text-sm text-gray-500 mt-1">Modifier l'agent traitant.</p>
+            @else
+                <!-- Champ en lecture seule -->
+                <input type="text" id="id_handling_user_display" value="{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}" 
+                    class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 bg-gray-100 shadow-sm focus:ring-0 focus:border-gray-300" readonly>
+                <input type="hidden" name="id_handling_user" value="{{ auth()->user()->id }}">
+            @endif
+        </div>
+
 
                 <div>
                     <label for="category" class="block text-lg font-medium text-gray-700">Catégorie</label>

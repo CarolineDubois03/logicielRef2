@@ -21,10 +21,10 @@ class CourierFactory extends Factory
             'annual_id' => $this->faker->unique()->numberBetween(1, 1000), // Numéro annuel
             'id_handling_user' => User::inRandomOrder()->first()?->id ?? User::factory(), // Utilisateur existant ou factory
             'category' => Category::inRandomOrder()->first()?->id ?? Category::factory(), // Catégorie existante ou factory
-            'document_path' => $this->faker->url, // URL fictive
+            'document_path' => 'SG/' . $this->faker->numerify('##') . '/' . $this->faker->year,
             'recipient' => Recipient::inRandomOrder()->first()?->id ?? Recipient::factory(), // Destinataire existant ou factory
             'copy_to' => json_encode(User::inRandomOrder()->take(rand(1, 3))->pluck('id')->toArray()), // Liste JSON d'utilisateurs
-            'year' => $this->faker->numberBetween(2020, 2024), // Année aléatoire
+            'year' => $this->faker->numberBetween(2023, 2025), // Année aléatoire
         ];
     }
 }

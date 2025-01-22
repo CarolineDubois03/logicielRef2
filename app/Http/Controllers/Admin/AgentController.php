@@ -8,12 +8,16 @@ use App\Models\Category;
 use App\Models\Recipient;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class AgentController extends Controller  {
     public function index()
     {
+
+        dd('test');
         // Récupérer les agents avec id_service = 2
         $agents = User::where('id_service', 2)->get();
+
     
         // Récupérer les utilisateurs qui ne sont pas agents
         $nonAgents = User::where('id_service', '!=', 2)
@@ -44,18 +48,21 @@ class AgentController extends Controller  {
 }
 
 
-    public function destroy($id)
+public function removeAgent($id)
 {
-    $agent = User::find($id);
+    $agent = User::findOrFail($id);
 
-    // Vérifiez si l'utilisateur a le service 2
+    // Vérifier si l'utilisateur est actuellement un agent
     if ($agent->id_service == 2) {
-        $agent->delete();
-        return redirect()->route('admin.settings')->with('success', 'Agent supprimé avec succès.');
+        $agent->id_service = null; // Retirer l'utilisateur des agents
+        $agent->save();
+
+        return redirect()->route('admin.courier.settings', ['tab' => 'agents'])->with('success', 'L\'utilisateur a été retiré des agents avec succès.');
     }
 
-    return redirect()->route('admin.courier.settings', ['tab' => 'agents'])->with('error', 'Cet utilisateur n\'est pas un agent valide.');
+    return redirect()->route('admin.courier.settings', ['tab' => 'agents'])->with('error', 'Cet utilisateur n\'est pas un agent.');
 }
+
 
     
 

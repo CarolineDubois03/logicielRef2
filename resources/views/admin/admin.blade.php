@@ -17,16 +17,17 @@
 <div class="container mx-auto p-4">
 
 @if(session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
-    </div>
+<div id="flash-message" class="fixed text-green-700 rounded relative" role="alert">
+    {{ session('success') }}
+</div>
 @endif
-@if(session('error'))
 
-    <div class="alert alert-danger">
-        {{ session('error') }}
-    </div>
+@if(session('error'))
+<div id="flash-message" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+    {{ session('error') }}
+</div>
 @endif
+
 
     @yield('content')
 </div>

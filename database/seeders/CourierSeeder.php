@@ -24,5 +24,7 @@ class CourierSeeder extends Seeder
             $courier->copiedUsers()->attach($users);
             $courier->save();
         });
+
+
     }
 }

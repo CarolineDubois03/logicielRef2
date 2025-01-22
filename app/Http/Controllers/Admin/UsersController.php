@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Models\Category;
 use App\Models\Recipient;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -41,7 +42,7 @@ class UsersController extends Controller
     // Mettre à jour un utilisateur existant
     public function update(Request $request, $id)
     {
-        dd($request->all());
+       
         $user = User::findOrFail($id);
 
         $request->validate([
@@ -54,15 +55,47 @@ class UsersController extends Controller
             'first_name' => $request->input('first_name'),
             'last_name' => $request->input('last_name'),
             'email' => $request->input('email'),
+            'role' => $request->input('role'),
+            'id_service' => $request->input('id_service'),
         ]);
 
         return redirect()->route('admin.courier.settings', ['tab' => 'users'])->with('success', 'Utilisateur modifié avec succès.');
     }
 
+    public function updateProfile(Request $request, $id)
+{
+    $user = User::findOrFail($id);
+
+    // Validate the incoming request
+    $request->validate([
+        'first_name' => 'required|string|max:255',
+        'last_name' => 'required|string|max:255',
+        'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+        'login' => 'required|string',
+    ]);
+
+    // Update user details
+    $user->update([
+        'first_name' => $request->input('first_name'),
+        'last_name' => $request->input('last_name'),
+        'email' => $request->input('email'),
+        'role' => $request->input('role'),
+        'id_service' => $request->input('id_service'),
+        'login' => $request->input('login'),
+    ]);
+
+    // Redirect to the show page with a success message
+    return redirect()->route('admin.profile.show', ['id' => $user->id])
+        ->with('success', 'Utilisateur modifié avec succès.');
+}
+
+    
+
     public function show($id)
     {
-        $user = User::findOrFail($id);
-        return view('admin.users.show', compact('user'));
+        $user = User::findOrFail($id)->load('service');
+        $services = Service::all();
+        return view('admin.profile.show', compact('user', 'services'));
     }
 
     // Supprimer un utilisateur
@@ -90,14 +123,16 @@ class UsersController extends Controller
                 ];
             });
     
+            // Vérifiez les résultats
+            \Log::info($results);
+    
             return response()->json($results); // Retourne les données au format JSON
         } catch (\Exception $e) {
-            // Log l'erreur pour la diagnostiquer
             \Log::error($e->getMessage());
             return response()->json(['error' => 'Une erreur s\'est produite.'], 500);
         }
     }
-
+    
 
     
     
