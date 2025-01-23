@@ -53,16 +53,18 @@
                     <!-- Champ modifiable (select) -->
                     <select id="id_handling_user" name="id_handling_user" class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
                         @foreach($agents as $agent)
-                            <option value="{{ $agent->id }}" {{ $courier->id_handling_user == $agent->id ? 'selected' : '' }}>
+                            <option value="{{ $agent->id }}" 
+                                {{ ($courier->id_handling_user == $agent->id || (!$courier->exists && $agent->id == auth()->user()->id)) ? 'selected' : '' }}>
                                 {{ $agent->first_name }} {{ $agent->last_name }}
                             </option>
                         @endforeach
                     </select>
+
                     <p class="text-sm text-gray-500 mt-1">Modifier l'agent traitant si nécessaire.</p>
                 @else
                     <!-- Champ en lecture seule -->
                     <input type="text" id="id_handling_user_display" value="{{ auth()->user()->first_name }} {{ auth()->user()->last_name }}" 
-                        class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 bg-gray-100 shadow-sm focus:ring-0 focus:border-gray-300" readonly>
+                    class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 bg-gray-100 shadow-sm focus:ring-0 focus:border-gray-300" readonly>
                     <input type="hidden" name="id_handling_user" value="{{ auth()->user()->id }}">
                 @endif
             </div>
@@ -143,7 +145,7 @@ $('.select2-copy-to').select2({
     allowClear: true
 });
 
-    $('.select2-recipient').on('select2:select', function (e) {
+$('.select2-recipient').on('select2:select', function (e) {
     const selectedOption = e.params.data;
 
     // Si le tag est nouveau, envoyer une requête pour créer le destinataire
@@ -153,12 +155,18 @@ $('.select2-copy-to').select2({
             label: selectedOption.text // Enregistrer le texte saisi
         }).done(data => {
             const newOption = new Option(data.label, data.id, true, true);
+
+            // Ajoute l'option nouvellement créée et la sélectionne
             $('.select2-recipient').append(newOption).trigger('change');
+
+            // Sélectionne automatiquement la nouvelle option après son ajout
+            $('.select2-recipient').val(data.id).trigger('change');
         }).fail(() => {
             alert('Erreur lors de l\'ajout du destinataire.');
         });
     }
 });
+
 });
 </script>
 @endsection
