@@ -310,29 +310,43 @@
         </tbody>
     </table>
 
-    <!-- Modal pour ajouter un utilisateur -->
-    <div id="add-user-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
-        <form action="{{ route('admin.users.store') }}" method="POST" class="bg-white p-6 rounded shadow-md max-w-md w-full">
-            @csrf
-            <h2 class="text-lg font-bold mb-4 text-gray-800">Ajouter un utilisateur</h2>
-            <label for="user-first-name" class="block text-sm font-medium text-gray-700">Prénom</label>
-            <input type="text" id="user-first-name" name="first_name" class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
-            
-            <label for="user-last-name" class="block text-sm font-medium text-gray-700 mt-4">Nom</label>
-            <input type="text" id="user-last-name" name="last_name" class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
-            
-            <label for="user-email" class="block text-sm font-medium text-gray-700 mt-4">Email</label>
-            <input type="email" id="user-email" name="email" class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
-            
-            <label for="user-password" class="block text-sm font-medium text-gray-700 mt-4">Mot de passe</label>
-            <input type="password" id="user-password" name="password" class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
+ <!-- Modal pour ajouter un utilisateur -->
+<div id="add-user-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
+    <form action="{{ route('admin.users.store') }}" method="POST" class="bg-white p-6 rounded shadow-md max-w-md w-full">
+        @csrf
+        <h2 class="text-lg font-bold mb-4 text-gray-800">Ajouter un utilisateur</h2>
+        
+        <label for="user-first-name" class="block text-sm font-medium text-gray-700">Prénom</label>
+        <input type="text" id="user-first-name" name="first_name" class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" required>
+        
+        <label for="user-last-name" class="block text-sm font-medium text-gray-700 mt-4">Nom</label>
+        <input type="text" id="user-last-name" name="last_name" class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" required>
+        
+        <label for="user-email" class="block text-sm font-medium text-gray-700 mt-4">Email</label>
+        <input type="email" id="user-email" name="email" class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50" required>
+        
+        <label for="user-role" class="block text-sm font-medium text-gray-700 mt-4">Rôle</label>
+        <select id="user-role" name="role" class="form-select" @if(auth()->user()->role === 'responsable') disabled @endif>
+            <option value="user" selected>Utilisateur</option>
+            @if(auth()->user()->role === 'admin')
+                <option value="admin">Admin</option>
+                <option value="responsable">Responsable</option>
+            @endif
+        </select>
 
-            <div class="mt-4 flex justify-end">
-                <button type="button" class="mr-2 bg-gray-500 text-white py-0.5 px-1.5 rounded hover:bg-gray-700" onclick="toggleModal('add-user-modal')">Annuler</button>
-                <button type="submit" class="bg-indigo-600 text-white py-0.5 px-1.5 rounded hover:bg-indigo-700">Ajouter</button>
-            </div>
-        </form>
-    </div>
+        <label for="user-service" class="block text-sm font-medium text-gray-700 mt-4">Service</label>
+        <select id="user-service" name="id_service" class="form-select" required>
+            @foreach($services as $service)
+                <option value="{{ $service->id }}">{{ $service->name }}</option>
+            @endforeach
+        </select>
+
+        <div class="mt-4 flex justify-end">
+            <button type="button" class="mr-2 bg-gray-500 text-white py-0.5 px-1.5 rounded hover:bg-gray-700" onclick="toggleModal('add-user-modal')">Annuler</button>
+            <button type="submit" class="bg-indigo-600 text-white py-0.5 px-1.5 rounded hover:bg-indigo-700">Ajouter</button>
+        </div>
+    </form>
+</div>
 
     <!-- Modal pour modifier un utilisateur -->
     <div id="edit-user-modal" class="hidden fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center">
@@ -506,7 +520,13 @@ function editUser(id, firstName, lastName, email, role, id_service) {
    document.addEventListener("DOMContentLoaded", function () {
     const tabButtons = document.querySelectorAll(".tab-button");
     const tabContents = document.querySelectorAll(".tab-content");
+    const userRoleField = document.getElementById("user-role");
 
+
+    if ("{{ auth()->user()->role }}" === "responsable") {
+        userRoleField.value = "user";
+        userRoleField.setAttribute("disabled", "true");
+    }
     // Fonction pour afficher l'onglet actif
     function activateTab(tabName) {
         tabButtons.forEach((btn) => btn.classList.remove("text-indigo-600", "border-indigo-600"));

@@ -9,6 +9,8 @@ use Illuminate\Notifications\Notifiable;
 use LdapRecord\Container;   
 use LdapRecord\Connection;
 use LdapRecord\Models\Entry;
+use Illuminate\Auth\Notifications\ResetPassword;
+
 
 class User extends Authenticatable
 {
@@ -81,5 +83,12 @@ public function hasRole(string $role): bool
     {
         return $this->role === $role;
     }
+
+
+public function sendPasswordResetNotification($token)
+{
+    $this->notify(new ResetPassword($token));
+}
+
 
 }
