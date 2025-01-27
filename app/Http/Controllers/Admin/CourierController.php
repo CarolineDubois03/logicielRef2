@@ -160,21 +160,28 @@ class CourierController extends Controller
     /**
      * Supprime un courrier.
      */
-    public function destroy(Request $request)
+    public function destroy(Request $request, $id = null)
     {
-        $courierId = $request->input('courier_id');
-        dd($courierId);
-        $courier = Courier::findOrFail($courierId);
+        if($id !== null) {
+            dd($id);
 
-        // Supprimer le fichier lié s'il existe
-        if ($courier->document_path && \Storage::exists($courier->document_path)) {
-            \Storage::delete($courier->document_path);
+            $courierId = $request->input('courier_id');
+            $courier = Courier::findOrFail($courierId);
+    
+            // Supprimer le fichier lié s'il existe
+            if ($courier->document_path && \Storage::exists($courier->document_path)) {
+                \Storage::delete($courier->document_path);
+            }
+    
+            // Supprimer le courrier
+            $courier->delete();
+    
+            return redirect()->route('admin.courier.index')->with('success', 'Courrier supprimé avec succès.');
+        } else {
+            return redirect()->route('admin.courier.index')->with('error', 'Aucun courrier à supprimer.');
+       
         }
-
-        // Supprimer le courrier
-        $courier->delete();
-
-        return redirect()->route('admin.couriers.index')->with('success', 'Courrier supprimé avec succès.');
+       
     }
 
     public function export(Request $request)

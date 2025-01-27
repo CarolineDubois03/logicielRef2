@@ -36,40 +36,7 @@ class User extends Authenticatable
         return $this->belongsTo(Service::class, 'id_service');
     }
 
-    public function authAttempLdap(String $password): bool
-    {
-        $connection = new Connection([
-            'hosts' => [env('LDAP_HOST')],
-            'port' => env('LDAP_PORT'),
-            'base_dn' => env('LDAP_BASE_DN'),
-            'username' => env('LDAP_USERNAME'),
-            'password' => env('LDAP_PASSWORD'),
-        ]);
-        
-        Container::addConnection($connection);
-        
-        
-        // Find user in ldap where email = $email
-        $cn = Entry::findBy('mail', $this->email);
-
-        if(!$cn) {
-            return false;
-        } else {
-            $cn = $cn->getFirstAttribute('cn');
-        }
-
-        if(!$cn) {
-            return false;
-        }
-        
-        // If user is found, try to authenticate else return false
-        
-        if ($connection->auth()->attempt($cn, $password)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
+    
 
 
     public function copiedCouriers()

@@ -32,7 +32,7 @@ class AuthController extends Controller
                 ])->onlyInput('email');
             }
 
-        if ($user->authAttempLdap($credentials['password']) || Auth::attempt($credentials)) {
+        if ( Auth::attempt($credentials)) {
             // Auth user
             Auth::login($user);
             return redirect()->route('admin.courier.index');
