@@ -42,11 +42,10 @@
 
                 <div>
                     <label for="recipient" class="block text-lg font-medium text-gray-700">Destinataire</label>
-                    <select id="recipient" name="recipient"
-                            class="select2-recipient mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
-                    </select>
+                    <select id="recipient" name="recipient" class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 select2-recipient"></select>
                     <p class="text-sm text-gray-500 mt-1">Recherchez ou ajoutez un destinataire.</p>
                 </div>
+
                 <div>
                 <label for="id_handling_user" class="block text-lg font-medium text-gray-700">Agent traitant</label>
 
@@ -87,12 +86,10 @@
 
                 <div>
                     <label for="copy_to" class="block text-lg font-medium text-gray-700">Copie à</label>
-                    <select id="copy_to" name="copy_to[]" multiple
-                            class="select2-recipient mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50">
-                    </select>
-                    <p class="text-sm text-gray-500 mt-1">Recherchez et ajoutez plusieurs destinataires.</p>
+                    <select id="copy_to" name="copy_to[]" class="mt-1 block w-full rounded-lg px-4 py-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-500 focus:ring-opacity-50 select2-copy-to" multiple></select>
+                    <p class="text-sm text-gray-500 mt-1">Recherchez et ajoutez des utilisateurs.</p>
                 </div>
-                </div>
+            </div>
 
             <div class="flex justify-end">
                 <button type="submit" class="inline-flex items-center px-6 py-3 text-lg font-medium text-white bg-indigo-600 rounded-lg shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -105,63 +102,71 @@
 
 <script>
 $(document).ready(function () {
-    function initSelect2(selector) {
-        $(selector).select2({
-            placeholder: 'Rechercher ou ajouter un destinataire',
-            ajax: {
-                url: '{{ route("admin.recipients.search") }}',
-                dataType: 'json',
-                delay: 250,
-                data: params => ({ q: params.term }),
-                processResults: data => ({
-                    results: data.map(recipient => ({ id: recipient.id, text: recipient.label }))
-                })
-            },
-            tags: true,
-            createTag: function (params) {
-                return {
-                    id: 'new-' + params.term, // ID temporaire
-                    text: params.term,
-                    newOption: true
-                };
-            }
-        });
+    $('.select2-recipient').select2({
+    placeholder: 'Rechercher ou ajouter un destinataire',
+    ajax: {
+        url: '{{ route("admin.recipients.search") }}',
+        dataType: 'json',
+        delay: 250,
+        data: params => ({ q: params.term }),
+        processResults: data => ({
+            results: data.map(recipient => ({ id: recipient.id, text: recipient.label }))
+        })
+    },
+    tags: true,
+    createTag: params => {
+        return {
+            id: params.term, // Utiliser uniquement le terme saisi comme ID
+            text: params.term, // Afficher uniquement le terme saisi comme texte
+            newOption: true
+        };
     }
-
-    function addNewRecipient(event) {
-        const selectedOption = event.params.data;
-
-        if (selectedOption.newOption) {
-            let selectElement = $(event.target);
-            let temporaryId = selectedOption.id;
-            let newLabel = selectedOption.text;
-
-            $.post('{{ route("admin.recipients.store") }}', {
-                _token: $('meta[name="csrf-token"]').attr('content'),
-                label: newLabel
-            }).done(function (data) {
-                const newOption = new Option(data.label, data.id, true, true);
-
-                // 🔹 Supprimer l'option temporaire et ajouter la vraie
-                selectElement.find(`option[value="${temporaryId}"]`).remove();
-                selectElement.append(newOption).trigger('change');
-
-            }).fail(function (xhr) {
-                console.error('Erreur AJAX :', xhr.responseText);
-                alert('Erreur lors de l\'ajout du destinataire.');
-            });
-        }
-    }
-
-    // Initialiser Select2
-    initSelect2('.select2-recipient');
-
-    // Gérer l'ajout dynamique des destinataires
-    $('.select2-recipient').on('select2:select', addNewRecipient);
 });
 
 
+$('.select2-copy-to').select2({
+    placeholder: 'Rechercher et ajouter des utilisateurs',
+    ajax: {
+        url: '{{ route("admin.users.search") }}',
+        dataType: 'json',
+        delay: 250,
+        data: params => ({ q: params.term }),
+        processResults: data => {
+            console.log(data); // Vérifiez ce qui est retourné
+            return {
+                results: data.map(user => ({
+                    id: user.id,
+                    text: user.text || 'Utilisateur inconnu' // Définit une valeur par défaut
+                }))
+            };
+        }
+    },
+    multiple: true,
+    allowClear: true
+});
 
+$('.select2-recipient').on('select2:select', function (e) {
+    const selectedOption = e.params.data;
 
+    // Si le tag est nouveau, envoyer une requête pour créer le destinataire
+    if (selectedOption.newOption) {
+        $.post('{{ route("admin.recipients.store") }}', {
+            _token: '{{ csrf_token() }}',
+            label: selectedOption.text // Enregistrer le texte saisi
+        }).done(data => {
+            const newOption = new Option(data.label, data.id, true, true);
+
+            // Ajoute l'option nouvellement créée et la sélectionne
+            $('.select2-recipient').append(newOption).trigger('change');
+
+            // Sélectionne automatiquement la nouvelle option après son ajout
+            $('.select2-recipient').val(data.id).trigger('change');
+        }).fail(() => {
+            alert('Erreur lors de l\'ajout du destinataire.');
+        });
+    }
+});
+
+});
 </script>
 @endsection
