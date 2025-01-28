@@ -9,6 +9,7 @@ use App\Models\Recipient;
 use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class UsersController extends Controller
 {
@@ -25,19 +26,44 @@ class UsersController extends Controller
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email',
-            'password' => 'required|string|min:8|confirmed', // Ajouté pour confirmation du mot de passe si besoin
+            'email' => 'required|email|unique:users,email',
+            'id_service' => 'required|exists:services,id',
         ]);
+    
+        // Vérifie le rôle de l'utilisateur connecté
+        $role = auth()->user()->role === 'responsable' ? 'user' : $request->input('role', 'user');
+    
+        // Crée un mot de passe par défaut
+        $defaultPassword = Str::random(12);
+    
+        // Générer le login basé sur les 3 premières lettres du prénom et du nom
+            $login = strtolower(substr($request->input('first_name'), 0, 3) . substr($request->input('last_name'), 0, 3));
 
-        User::create([
+            // S'assurer que le login est unique dans la base de données
+            $originalLogin = $login;
+            $counter = 1;
+            while (User::where('login', $login)->exists()) {
+                $login = $originalLogin . $counter;
+                $counter++;
+            }
+
+        // Créer l'utilisateur
+        $user = User::create([
             'first_name' => $request->input('first_name'),
             'last_name' => $request->input('last_name'),
             'email' => $request->input('email'),
-            'password' => Hash::make($request->input('password')), // Hachage du mot de passe
+            'login' => $login, 
+            'role' => $role,
+            'id_service' => $request->input('id_service'),
+            'password' => bcrypt($defaultPassword), // Mot de passe temporaire
         ]);
-
-        return redirect()->route('admin.courier.settings', ['tab' => 'users'])->with('success', 'Utilisateur ajouté avec succès.');
+    
+        // Envoie un email pour que l'utilisateur définisse un mot de passe
+        $user->sendPasswordResetNotification($user->createToken(name: 'password-reset')->plainTextToken);
+    
+        return redirect()->route('admin.users.index')->with('success', 'Utilisateur ajouté avec succès. Un email a été envoyé à l\'utilisateur pour définir son mot de passe.');
     }
+    
 
     // Mettre à jour un utilisateur existant
     public function update(Request $request, $id)
