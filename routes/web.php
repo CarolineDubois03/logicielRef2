@@ -60,7 +60,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::delete('courier/agents/{id}', [CourierController::class, 'destroyAgent'])->name('courier.destroyAgent');
     Route::post('courier/update-selected-services', [CourierController::class, 'updateSelectedServices'])->name('courier.updateSelectedServices');
     Route::resource('courier', CourierController::class);
-    Route::delete('courier', [CourierController::class, 'destroy'])->name('courier.destroy');
+    Route::delete('courier/{id}', [CourierController::class, 'destroy'])->name('courier.destroy');
     Route::get('courier/{id}/edit', [CourierController::class, 'edit'])->name('courier.edit');
     Route::post('courier/destroy-selected', [CourierController::class, 'destroySelected'])->name('courier.destroySelected');
 

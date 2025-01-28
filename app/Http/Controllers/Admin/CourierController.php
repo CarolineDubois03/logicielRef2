@@ -48,7 +48,6 @@ class CourierController extends Controller
 
     // Récupérer les années distinctes depuis les courriers
     $years = Courier::selectRaw("strftime('%Y', created_at) as year")->distinct()->orderBy('year', 'desc')->pluck('year');
-
     // Retourner les courriers et autres données nécessaires à la vue
     return view('admin.couriers.index', compact('couriers', 'years', 'selectedYear', 'perPage'));
 }
@@ -160,29 +159,22 @@ class CourierController extends Controller
     /**
      * Supprime un courrier.
      */
-    public function destroy(Request $request, $id = null)
+    public function destroy($id)
     {
-        if($id !== null) {
-            dd($id);
-
-            $courierId = $request->input('courier_id');
-            $courier = Courier::findOrFail($courierId);
+        // Récupérer le courrier avec l'ID donné
+        $courier = Courier::findOrFail($id);
     
-            // Supprimer le fichier lié s'il existe
-            if ($courier->document_path && \Storage::exists($courier->document_path)) {
-                \Storage::delete($courier->document_path);
-            }
-    
-            // Supprimer le courrier
-            $courier->delete();
-    
-            return redirect()->route('admin.courier.index')->with('success', 'Courrier supprimé avec succès.');
-        } else {
-            return redirect()->route('admin.courier.index')->with('error', 'Aucun courrier à supprimer.');
-       
+        // Supprimer le fichier lié s'il existe
+        if ($courier->document_path && \Storage::exists($courier->document_path)) {
+            \Storage::delete($courier->document_path);
         }
-       
+    
+        // Supprimer le courrier
+        $courier->delete();
+    
+        return redirect()->route('admin.courier.index')->with('success', 'Courrier supprimé avec succès.');
     }
+    
 
     public function export(Request $request)
     {

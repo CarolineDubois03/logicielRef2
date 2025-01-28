@@ -1,69 +1,77 @@
 <?php
 
 namespace App\Http\Controllers\Admin;
-
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Models\Category;
+
 use App\Models\Recipient;
+use App\Models\Agent;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 
-class AgentController extends Controller  {
-    public function index()
+use App\Models\Agents;
+
+class AgentController extends Controller
+{
+
+    public function store(Request $request)
     {
-
-        dd('test');
-        // Récupérer les agents avec id_service = 2
-        $agents = User::where('id_service', 2)->get();
-
+        $request->validate(['label' => 'required|string|max:255']);
     
-        // Récupérer les utilisateurs qui ne sont pas agents
-        $nonAgents = User::where('id_service', '!=', 2)
-                        ->orWhereNull('id_service')
-                        ->get();
+        // Vérifier si le destinataire existe déjà
+        $existingRecipient = Recipient::where('label', $request->input('label'))->first();
+        if ($existingRecipient) {
+            return response()->json(['errors' => ['label' => 'Ce destinataire existe déjà.']], 422);
+        }
     
-        dd($agents, $nonAgents); // Décommenter pour déboguer si nécessaire
+        // Créer le destinataire
+        $recipient = Recipient::create(['label' => $request->input('label')]);
     
-        return view('admin.courier.settings', ['tab' => 'agents'], compact('agents', 'nonAgents'));
+        return redirect()->route('admin.courier.settings', ['tab' => 'recipients'])->with('success', 'Destinataire créé avec succès.');
     }
     
+
+
+    public function update(Request $request, $id)
+    {
+        $request->validate(['label' => 'required|string|max:255']);
+        $recipient = Recipient::findOrFail($id);
+        $recipient->label = $request->input('label');
+        $recipient->save();
     
-
-    public function addAgent(Request $request)
-{
-    $request->validate([
-        'user_id' => 'required|exists:users,id',
-    ]);
-
-    // Récupérer l'utilisateur
-    $user = User::find($request->user_id);
-
-    // Ajouter id_service = 2
-    $user->id_service = 2;
-    $user->save();
-
-    return redirect()->route('admin.courier.settings', ['tab' => 'agents'])->with('success', 'L\'agent a été ajouté avec succès.');
-}
-
-
-public function removeAgent($id)
-{
-    $agent = User::findOrFail($id);
-
-    // Vérifier si l'utilisateur est actuellement un agent
-    if ($agent->id_service == 2) {
-        $agent->id_service = null; // Retirer l'utilisateur des agents
-        $agent->save();
-
-        return redirect()->route('admin.courier.settings', ['tab' => 'agents'])->with('success', 'L\'utilisateur a été retiré des agents avec succès.');
+        return redirect()->route('admin.courier.settings', ['tab' => 'recipients'])->with('success', 'Destinataire mis à jour avec succès.');
     }
-
-    return redirect()->route('admin.courier.settings', ['tab' => 'agents'])->with('error', 'Cet utilisateur n\'est pas un agent.');
-}
-
-
     
+    public function destroy($id)
+{
+    $recipient = Recipient::findOrFail($id);
 
+    // Supprimez le destinataire
+    $recipient->delete();
+
+    return redirect()->route('admin.courier.settings')->with('success', 'Destinataire supprimé avec succès.');
+}
+public function search(Request $request)
+    {
+        try {
+            $query = $request->get('q', '');
+            $users = Agent::where('first_name', 'like', "%{$query}%")
+                         ->orWhere('last_name', 'like', "%{$query}%")
+                         ->limit(10)
+                         ->get();
+    
+            $results = $users->map(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'text' => $user->first_name . ' ' . $user->last_name,
+                ];
+            });
+    
+            // Vérifiez les résultats
+            \Log::info($results);
+    
+            return response()->json($results); // Retourne les données au format JSON
+        } catch (\Exception $e) {
+            \Log::error($e->getMessage());
+            return response()->json(['error' => 'Une erreur s\'est produite.'], 500);
+        }
+    }
 }

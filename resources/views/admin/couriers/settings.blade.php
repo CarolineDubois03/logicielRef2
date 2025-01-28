@@ -396,7 +396,7 @@
 
                 <!-- Onglet Destinataires -->
                 <div id="recipients" class="tab-content hidden">
-    <h2 class="text-lg font-bold mb-4">Liste des destinataires</h2>
+    <h2 class="text-lg font-bold mb-4">Liste des contacts</h2>
 
     <!-- Bouton pour ajouter un destinataire -->
     <div class="mb-4">
