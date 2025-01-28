@@ -47,7 +47,10 @@ class CourierController extends Controller
     $couriers = $query->paginate($perPage);
 
     // Récupérer les années distinctes depuis les courriers
-    $years = Courier::selectRaw("strftime('%Y', created_at) as year")->distinct()->orderBy('year', 'desc')->pluck('year');
+    $years = Courier::selectRaw("YEAR(created_at) as year")
+    ->distinct()
+    ->orderBy('year', 'desc')
+    ->pluck('year');
 
     // Retourner les courriers et autres données nécessaires à la vue
     return view('admin.couriers.index', compact('couriers', 'years', 'selectedYear', 'perPage'));
