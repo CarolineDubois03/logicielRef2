@@ -10,6 +10,10 @@ use App\Models\Service;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use App\Mail\ResetPasswordMail;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\WelcomeUserMail;
+
 
 class UsersController extends Controller
 {
@@ -30,40 +34,34 @@ class UsersController extends Controller
             'id_service' => 'required|exists:services,id',
         ]);
     
-        // Vérifie le rôle de l'utilisateur connecté
         $role = auth()->user()->role === 'responsable' ? 'user' : $request->input('role', 'user');
+        
+        $temporaryPassword = Str::random(12);
+        
+        // Générer un login unique
+        $login = strtolower(substr($request->input('first_name'), 0, 3) . substr($request->input('last_name'), 0, 3));
+        $originalLogin = $login;
+        $counter = 1;
+        while (User::where('login', $login)->exists()) {
+            $login = $originalLogin . $counter;
+            $counter++;
+        }
     
-        // Crée un mot de passe par défaut
-        $defaultPassword = Str::random(12);
-    
-        // Générer le login basé sur les 3 premières lettres du prénom et du nom
-            $login = strtolower(substr($request->input('first_name'), 0, 3) . substr($request->input('last_name'), 0, 3));
-
-            // S'assurer que le login est unique dans la base de données
-            $originalLogin = $login;
-            $counter = 1;
-            while (User::where('login', $login)->exists()) {
-                $login = $originalLogin . $counter;
-                $counter++;
-            }
-
-        // Créer l'utilisateur
         $user = User::create([
             'first_name' => $request->input('first_name'),
             'last_name' => $request->input('last_name'),
             'email' => $request->input('email'),
-            'login' => $login, 
+            'login' => $login,
             'role' => $role,
             'id_service' => $request->input('id_service'),
-            'password' => bcrypt($defaultPassword), // Mot de passe temporaire
+            'password' => bcrypt($temporaryPassword),
         ]);
     
-        // Envoie un email pour que l'utilisateur définisse un mot de passe
-        $user->sendPasswordResetNotification($user->createToken(name: 'password-reset')->plainTextToken);
+        // ENVOI DU MAIL DE BIENVENUE
+        Mail::to($user->email)->send(new WelcomeUserMail($user, $temporaryPassword));
     
-        return redirect()->route('admin.users.index')->with('success', 'Utilisateur ajouté avec succès. Un email a été envoyé à l\'utilisateur pour définir son mot de passe.');
+        return redirect()->route('admin.users.index')->with('success', 'Utilisateur ajouté avec succès. Un email a été envoyé.');
     }
-    
 
     // Mettre à jour un utilisateur existant
     public function update(Request $request, $id)
@@ -160,7 +158,29 @@ class UsersController extends Controller
     }
     
 
+    public function sendResetPasswordEmail(Request $request)
+    {
+        $request->validate(['email' => 'required|email|exists:users,email']);
+        
+        $user = User::where('email', $request->email)->first();
     
+        if (!$user) {
+            return redirect()->back()->with('error', 'Utilisateur non trouvé.');
+        }
+    
+        $resetToken = Str::random(60);
+        $user->update(['remember_token' => $resetToken]);
+    
+        $resetUrl = route('password.reset', ['token' => $resetToken]);
+    
+        Mail::to($user->email)->send(new ResetPasswordMail($user, $resetUrl));
+    
+        return redirect()->back()->with('success', 'Email de réinitialisation envoyé.');
+    }
+    public function showResetPasswordForm(Request $request, $token)
+    {
+        return view('auth.password-reset', ['token' => $token, 'email' => $request->email]);
+    }
     
 
 }

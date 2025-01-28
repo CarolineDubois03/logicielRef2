@@ -81,7 +81,7 @@
                     Agents
                 </button>
                 <button class="tab-button" data-target="#recipients">
-                    Destinataires
+                    Contacts
                 </button>
                 <button class="tab-button" data-target="#categories">
                     Catégories

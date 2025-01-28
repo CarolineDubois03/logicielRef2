@@ -46,11 +46,23 @@ class CourierController extends Controller
     // Paginer les résultats
     $couriers = $query->paginate($perPage);
 
-    // Récupérer les années distinctes depuis les courriers
+    // Vérifier le type de base de données utilisée
+$databaseDriver = config('database.default');
+
+if ($databaseDriver === 'mysql') {
     $years = Courier::selectRaw("YEAR(created_at) as year")
-    ->distinct()
-    ->orderBy('year', 'desc')
-    ->pluck('year');
+        ->distinct()
+        ->orderBy('year', 'desc')
+        ->pluck('year');
+} elseif ($databaseDriver === 'sqlite') {
+    $years = Courier::selectRaw("strftime('%Y', created_at) as year")
+        ->distinct()
+        ->orderBy('year', 'desc')
+        ->pluck('year');
+} else {
+    $years = collect(); // Si la base n'est ni MySQL ni SQLite, on retourne une collection vide
+}
+
 
     // Retourner les courriers et autres données nécessaires à la vue
     return view('admin.couriers.index', compact('couriers', 'years', 'selectedYear', 'perPage'));
@@ -163,29 +175,21 @@ class CourierController extends Controller
     /**
      * Supprime un courrier.
      */
-    public function destroy(Request $request, $id = null)
-    {
-        if($id !== null) {
-            dd($id);
+    public function destroy($id)
+{
+    // Récupérer le courrier avec l'ID donné
+    $courier = Courier::findOrFail($id);
 
-            $courierId = $request->input('courier_id');
-            $courier = Courier::findOrFail($courierId);
-    
-            // Supprimer le fichier lié s'il existe
-            if ($courier->document_path && \Storage::exists($courier->document_path)) {
-                \Storage::delete($courier->document_path);
-            }
-    
-            // Supprimer le courrier
-            $courier->delete();
-    
-            return redirect()->route('admin.courier.index')->with('success', 'Courrier supprimé avec succès.');
-        } else {
-            return redirect()->route('admin.courier.index')->with('error', 'Aucun courrier à supprimer.');
-       
-        }
-       
+    // Supprimer le fichier lié s'il existe
+    if ($courier->document_path && \Storage::exists($courier->document_path)) {
+        \Storage::delete($courier->document_path);
     }
+
+    // Supprimer le courrier
+    $courier->delete();
+
+    return redirect()->route('admin.courier.index')->with('success', 'Courrier supprimé avec succès.');
+}
 
     public function export(Request $request)
     {

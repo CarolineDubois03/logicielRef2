@@ -87,7 +87,7 @@ Route::prefix('admin')->name('admin.')->middleware('auth')->group(function () {
     Route::post('agents/add', [AgentController::class, 'addAgent'])->name('agents.add');
     
     Route::put('agents/remove/{id}', [AgentController::class, 'removeAgent'])->name('agents.remove');
-    Route::get('password/reset/{token}', [UsersController::class, 'showResetPasswordForm'])->name('password.reset');
+    Route::get('password/reset/{token}', action: [UsersController::class, 'showResetPasswordForm'])->name('password.reset');
 
 });
 
